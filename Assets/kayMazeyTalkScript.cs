@@ -44,6 +44,7 @@ public class kayMazeyTalkScript : MonoBehaviour
     int goalPosition = -1;
     int[] vectors = { -6, 1, 6, -1 };
     string[] dirNames = { "up", "right", "down", "left" };
+    float[] bz = { 0.95f, 1.122f, 1.07f, 1f };
 
     void Awake()
     {
@@ -82,17 +83,20 @@ public class kayMazeyTalkScript : MonoBehaviour
 
     void ScreenPress()
     {
+        Screen.AddInteractionPunch(0.5f);
         if (!traversable)
         {
-            Debug.LogFormat("<KayMazey Talk #{0}> screen", moduleId);
+            Audio.PlaySoundAtTransform("KMT_bwomp", Screen.transform);
             traversable = true;
             Word.text = InvertIfNeeded();
             StartCoroutine(ActivateArrows());
+            Debug.LogFormat("<KayMazey Talk #{0}> screen", moduleId);
         }
     }
 
     void ArrowPress(int a)
     {
+        Arrows[a].AddInteractionPunch(0.5f);
         int r = invert ? a ^ 2 : a;
         int p = (int)Math.Pow(2, r);
         if ((mazeDirs[currentPosition] & p) == p)
@@ -103,23 +107,28 @@ public class kayMazeyTalkScript : MonoBehaviour
                 Word.text = "";
                 Module.HandlePass();
                 Debug.LogFormat("[KayMazey Talk #{0}] You made it to the goal. Module solved.", moduleId);
+                Audio.PlaySoundAtTransform("KMT_solve", Screen.transform);
+                StartCoroutine(SolveAnim());
                 return;
             }
+            Audio.PlaySoundAtTransform("KMT_step", Screen.transform);
             invert = Rnd.Range(0, 10) < 4;
             Word.text = InvertIfNeeded();
             Debug.LogFormat("<KayMazey Talk #{0}> {1} ({2}), {3}", moduleId, dirNames[a], dirNames[r], InvertIfNeeded());
+            StartCoroutine(ArrowAnim(1.03f, r));
         }
         else
         {
             Module.HandleStrike();
             Debug.LogFormat("[KayMazey Talk #{0}] Moving {1} from {2} leads nowhere, strike!", moduleId, dirNames[a], InvertIfNeeded());
-            StartCoroutine(DeactivateArrows());
             traversable = false;
             Word.text = mazeWords[goalPosition];
+            StartCoroutine(DeactivateArrows());
         }
     }
 
-    string InvertIfNeeded () {
+    string InvertIfNeeded()
+    {
         return mazeWords[currentPosition].Replace("K", invert ? "" : "K");
     }
 
@@ -129,15 +138,83 @@ public class kayMazeyTalkScript : MonoBehaviour
         {
             ArrowObjs[o].SetActive(true);
         }
-        yield return null;
+        float elapsed = 0f;
+        float duration = 1f;
+        while (elapsed < duration)
+        {
+            for (int o = 0; o < 4; o++)
+            {
+                //use the bezier to make smooth
+                float scale = Lerp(Lerp(Lerp(bz[0], bz[1], elapsed), Lerp(bz[1], bz[2], elapsed), elapsed), Lerp(Lerp(bz[1], bz[2], elapsed), Lerp(bz[2], bz[3], elapsed), elapsed), elapsed);
+                ArrowObjs[o].transform.localScale = new Vector3(scale, 1f, scale);
+            }
+            yield return null;
+            elapsed += Time.deltaTime;
+        }
+        for (int o = 0; o < 4; o++)
+        {
+            ArrowObjs[o].transform.localScale = new Vector3(1f, 1f, 1f);
+        }
+    }
+
+    private IEnumerator ArrowAnim(float z, int w)
+    {
+        float elapsed = 0f;
+        float duration = 0.2f;
+        while (elapsed < duration)
+        {
+            float scale = Lerp(z, 1f, elapsed * 5);
+            ArrowObjs[w].transform.localScale = new Vector3(scale, 1f, scale);
+            yield return null;
+            elapsed += Time.deltaTime;
+        }
+        ArrowObjs[w].transform.localScale = new Vector3(1f, 1f, 1f);
     }
 
     private IEnumerator DeactivateArrows()
     {
+        float elapsed = 0f;
+        float duration = 0.1f;
+        while (elapsed < duration)
+        {
+            float scale = Lerp(1f, 0f, elapsed * 10);
+            for (int o = 0; o < 4; o++)
+            {
+                ArrowObjs[o].transform.localScale = new Vector3(o % 2 == 0 ? scale : 1f, 1f, o % 2 == 0 ? 1f : scale);
+            }
+            yield return null;
+            elapsed += Time.deltaTime;
+        }
         for (int o = 0; o < 4; o++)
         {
             ArrowObjs[o].SetActive(false);
+            ArrowObjs[o].transform.localScale = new Vector3(1f, 1f, 1f);
         }
-        yield return null;
+    }
+
+    private IEnumerator SolveAnim()
+    {
+        float elapsed = 0f;
+        float duration = 0.4f;
+        float om = 0.04f;
+        while (elapsed < duration)
+        {
+            for (int o = 0; o < 4; o++)
+            {
+                ArrowObjs[o].SetActive(Rnd.Range(0, 2) == 0);
+            }
+            yield return new WaitForSeconds(om);
+            yield return null;
+            elapsed += Time.deltaTime + om;
+            for (int o = 0; o < 4; o++)
+            {
+                ArrowObjs[o].SetActive(false);
+            }
+        }
+    }
+    
+    float Lerp(float a, float b, float t)
+    { //this assumes t is in the range 0-1
+        return a * (1f - t) + b * t;
     }
 }

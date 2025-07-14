@@ -44,7 +44,6 @@ public class kayMazeyTalkScript : MonoBehaviour
     int goalPosition = -1;
     int[] vectors = { -6, 1, 6, -1 };
     string[] dirNames = { "up", "right", "down", "left" };
-    float[] bz = { 0.95f, 1.122f, 1.07f, 1f };
 
     void Awake()
     {
@@ -52,8 +51,7 @@ public class kayMazeyTalkScript : MonoBehaviour
 
         Screen.OnInteract += delegate () { ScreenPress(); return false; };
 
-        for (int a = 0; a < 4; a++)
-        {
+        for (int a = 0; a < 4; a++) {
             int ax = a; //this is so incredibly dumb
             Arrows[a].OnInteract += delegate { ArrowPress(ax); return false; };
         }
@@ -102,6 +100,7 @@ public class kayMazeyTalkScript : MonoBehaviour
         if ((mazeDirs[currentPosition] & p) == p)
         {
             currentPosition += vectors[r];
+            StartCoroutine(ArrowAnim(1.03f, r));
             if (currentPosition == goalPosition)
             {
                 Word.text = "";
@@ -115,7 +114,6 @@ public class kayMazeyTalkScript : MonoBehaviour
             invert = Rnd.Range(0, 10) < 4;
             Word.text = InvertIfNeeded();
             Debug.LogFormat("<KayMazey Talk #{0}> {1} ({2}), {3}", moduleId, dirNames[a], dirNames[r], InvertIfNeeded());
-            StartCoroutine(ArrowAnim(1.03f, r));
         }
         else
         {
@@ -144,8 +142,8 @@ public class kayMazeyTalkScript : MonoBehaviour
         {
             for (int o = 0; o < 4; o++)
             {
-                //use the bezier to make smooth
-                float scale = Lerp(Lerp(Lerp(bz[0], bz[1], elapsed), Lerp(bz[1], bz[2], elapsed), elapsed), Lerp(Lerp(bz[1], bz[2], elapsed), Lerp(bz[2], bz[3], elapsed), elapsed), elapsed);
+                //use a bezier to make smooth
+                float scale = Lerp(Lerp(Lerp(0.95f, 1.122f, elapsed), Lerp(1.122f, 1.07f, elapsed), elapsed), Lerp(Lerp(1.122f, 1.07f, elapsed), Lerp(1.07f, 1f, elapsed), elapsed), elapsed);
                 ArrowObjs[o].transform.localScale = new Vector3(scale, 1f, scale);
             }
             yield return null;

@@ -5,11 +5,13 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using KModkit;
+using Rnd = UnityEngine.Random;
 
 public class templateScript : MonoBehaviour {
 
     public KMBombInfo Bomb;
     public KMAudio Audio;
+    public KMBombModule Module;
 
     //Logging
     static int moduleIdCounter = 1;

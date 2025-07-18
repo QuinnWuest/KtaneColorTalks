@@ -53,6 +53,7 @@ GameObject:
   - component: {fileID: 4911713706840394}
   - component: {fileID: 33160792132070160}
   - component: {fileID: 23327264020119726}
+  - component: {fileID: 114403678629146722}
   m_Layer: 0
   m_Name: ModelComponent
   m_TagString: Untagged
@@ -70,6 +71,7 @@ GameObject:
   - component: {fileID: 4203725013868296}
   - component: {fileID: 33594537880584496}
   - component: {fileID: 23873408824620310}
+  - component: {fileID: 114301421027908376}
   m_Layer: 0
   m_Name: Surface
   m_TagString: Untagged
@@ -295,6 +297,19 @@ MonoBehaviour:
   m_Script: {fileID: 2144496390, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &114301421027908376
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1513904935782426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1005838349, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShaderNames:
+  - KT/Mobile/DiffuseTint
 --- !u!114 &114332874366154240
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -317,6 +332,19 @@ MonoBehaviour:
   m_Script: {fileID: -1675560866, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &114403678629146722
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1389175856756706}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1005838349, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShaderNames:
+  - KT/Mobile/DiffuseTint
 --- !u!114 &114516432812246144
 MonoBehaviour:
   m_ObjectHideFlags: 1

@@ -118,7 +118,7 @@ public class kayMazeyTalkScript : MonoBehaviour
         else
         {
             Module.HandleStrike();
-            Debug.LogFormat("[KayMazey Talk #{0}] Moving {1} from {2} leads nowhere, strike!", moduleId, dirNames[a], InvertIfNeeded());
+            Debug.LogFormat("[KayMazey Talk #{0}] Moving {1} from {2} go into a wall, strike!", moduleId, dirNames[a], InvertIfNeeded());
             traversable = false;
             Word.text = mazeWords[goalPosition];
             StartCoroutine(DeactivateArrows());

@@ -56,7 +56,6 @@ public class quoteCrazyTalkEndQuoteScript : MonoBehaviour
     List<string> submitted = new List<string> { };
     bool struck = false;
     bool good = false;
-    int presses = 0;
     bool[] pressed = { false, false, false, false };
     int attps = 0;
     int attws = 0;
@@ -392,7 +391,6 @@ public class quoteCrazyTalkEndQuoteScript : MonoBehaviour
         Debug.LogFormat("[Quote Crazy Talk End Quote #{0}] Submitted {1}. That is incorrect, strike!", moduleId, submitted.Join(", "));
         HighlightObj.SetActive(true);
         struck = false;
-        presses = 0;
         for (int b = 0; b < 4; b++)
         {
             pressed[b] = false;

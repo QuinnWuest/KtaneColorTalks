@@ -7,7 +7,8 @@ using UnityEngine;
 using KModkit;
 using Rnd = UnityEngine.Random;
 
-public class boozleTalkScript : MonoBehaviour {
+public class boozleTalkScript : MonoBehaviour
+{
 
     public KMBombInfo Bomb;
     public KMAudio Audio;
@@ -17,6 +18,7 @@ public class boozleTalkScript : MonoBehaviour {
     public GameObject SpritesObj;
     public SpriteRenderer[] SpriteSlots;
     public Sprite[] Sprites;
+    public TextMesh[] Letters;
 
     string[] wordlists = {
         "EIGHT,ELEVEN,FIVE,FOUR,NINE,ONE,SEVEN,SIX,TEN,THIRTEEN,THREE,TWELVE,TWENTY,TWO,ZERO",
@@ -31,16 +33,44 @@ public class boozleTalkScript : MonoBehaviour {
         "BANJO,CELLO,CLARINET,COWBELL,CYMBAL,DRUM,FLUTE,GUITAR,OBOE,OCARINA,PIANO,RECORDER,TRUMPET,UKULELE,VIOLIN"
     };
     string[] categories = { "a number", "a color", "a shape", "a country", "an element", "an animal", "a food", "an emotion", "a sport", "an instrument" };
+    string word;
     int digit;
     string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    int letterCount;
 
     //Logging
     static int moduleIdCounter = 1;
     int moduleId;
     private bool moduleSolved;
 
-    void Awake () {
+    private BoozleTalkSettings Settings = new BoozleTalkSettings();
+    bool setOne = true;
+    bool setTwo = false;
+    bool setThree = false;
+    public bool[] testBools;
+
+    void Awake()
+    {
         moduleId = moduleIdCounter++;
+
+        if (!Application.isEditor)
+        {
+            ModConfig<BoozleTalkSettings> modConfig = new ModConfig<BoozleTalkSettings>("BoozleTalkSettings");
+            Settings = modConfig.Settings;
+            modConfig.Settings = Settings;
+
+            setOne = Settings.SetOne || (!Settings.SetTwo && !Settings.SetThree);
+            setTwo = Settings.SetTwo;
+            setThree = Settings.SetThree;
+        }
+        else
+        {
+            setOne = testBools[0] || (!testBools[1] && !testBools[2]);
+            setTwo = testBools[1];
+            setThree = testBools[2];
+        }
+
+        Debug.LogFormat("<BoozleTalk #{0}> Set 1: {1}, Set 2: {2}, Set 3: {3}", moduleId, setOne ? "Enabled" : "Disabled", setTwo ? "Enabled" : "Disabled", setThree ? "Enabled" : "Disabled");
 
         Selectable.OnInteract += delegate () { Press(); return false; };
     }
@@ -49,9 +79,10 @@ public class boozleTalkScript : MonoBehaviour {
     void Start()
     {
         digit = Rnd.Range(0, 10);
-        string word = wordlists[digit].Split(',').PickRandom();
+        word = wordlists[digit].Split(',').PickRandom();
         Debug.LogFormat("[BoozleTalk #{0}] Your word is {1}, which is {2}. It's corresponding digit is {3}.", moduleId, word, categories[digit], digit);
 
+        letterCount = word.Length;
         string wPadding = "*";
         for (int h = 0; h < (8 - word.Length) / 2; h++)
         {
@@ -65,20 +96,33 @@ public class boozleTalkScript : MonoBehaviour {
         {
             wPadding += " ";
         }
-        wPadding = wPadding.Replace("*", word);
+        word = wPadding.Replace("*", word);
 
-        for (int q = 0; q < 8; q++) {
-            SpriteSlots[q].sprite = wPadding[q] == ' ' ? null : Sprites[alphabet.IndexOf(wPadding[q])];
+        List<int> validSets = new List<int> { };
+        if (setOne) { validSets.Add(0); }
+        if (setTwo) { validSets.Add(1); }
+        if (setThree) { validSets.Add(2); }
+        string loggingSets = "";
+
+        for (int q = 0; q < 8; q++)
+        {
+            int chosenSet = validSets.PickRandom();
+            SpriteSlots[q].sprite = word[q] == ' ' ? null : Sprites[26 * chosenSet + alphabet.IndexOf(word[q])];
+            loggingSets += word[q] == ' ' ? "" : (chosenSet + 1).ToString();
         }
+        Debug.LogFormat("<BoozleTalk #{0}> Sets used: {1}", moduleId, loggingSets);
     }
 
-    void Press() {
+    void Press()
+    {
         if (moduleSolved) { return; }
         if (Bomb.GetFormattedTime().Contains(digit.ToString()))
         {
+            Audio.PlaySoundAtTransform("BT_solve", Selectable.transform);
             Module.HandlePass();
             moduleSolved = true;
             Debug.LogFormat("[BoozleTalk #{0}] Pressed at {1}, which is correct. Module solved.", moduleId, Bomb.GetFormattedTime());
+            StartCoroutine(SolveAnim());
         }
         else
         {
@@ -86,4 +130,51 @@ public class boozleTalkScript : MonoBehaviour {
             Debug.LogFormat("[BoozleTalk #{0}] Pressed at {1}, which is incorrect, strike!", moduleId, Bomb.GetFormattedTime());
         }
     }
+
+    private IEnumerator SolveAnim()
+    {
+        for (int q = 0; q < 8; q++)
+        {
+            if (word[q] == ' ')
+            {
+                continue;
+            }
+            SpriteSlots[q].sprite = null;
+            Letters[q].text = word[q].ToString();
+            yield return new WaitForSeconds(0.809f / letterCount);
+        }
+    }
+
+    class BoozleTalkSettings
+    {
+        public bool SetOne = true;
+        public bool SetTwo = false;
+        public bool SetThree = false;
+    }
+
+    static Dictionary<string, object>[] TweaksEditorSettings = new Dictionary<string, object>[]
+    {
+        new Dictionary<string, object>
+        {
+            { "Filename", "BoozleTalkSettings.json" },
+            { "Name", "BoozleTalk Settings" },
+            { "Listing", new List<Dictionary<string, object>>{
+                new Dictionary<string, object>
+                {
+                    { "Key", "SetOne" },
+                    { "Text", "Whether Boozleglyph Set 1 is used." }
+                },
+                new Dictionary<string, object>
+                {
+                    { "Key", "SetTwo" },
+                    { "Text", "Whether Boozleglyph Set 2 is used." }
+                },
+                new Dictionary<string, object>
+                {
+                    { "Key", "SetThree" },
+                    { "Text", "Whether Boozleglyph Set 3 is used." }
+                },
+            } }
+        }
+    };
 }

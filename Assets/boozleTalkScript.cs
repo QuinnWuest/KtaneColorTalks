@@ -115,6 +115,7 @@ public class boozleTalkScript : MonoBehaviour
 
     void Press()
     {
+        Selectable.AddInteractionPunch(1f);
         if (moduleSolved) { return; }
         if (Bomb.GetFormattedTime().Contains(digit.ToString()))
         {

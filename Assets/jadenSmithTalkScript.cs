@@ -7,7 +7,8 @@ using UnityEngine;
 using KModkit;
 using Rnd = UnityEngine.Random;
 
-public class jadenSmithTalkScript : MonoBehaviour {
+public class jadenSmithTalkScript : MonoBehaviour
+{
 
     public KMAudio Audio;
     public KMBombModule Module;
@@ -118,6 +119,7 @@ public class jadenSmithTalkScript : MonoBehaviour {
         "Don't Tell Me You Cried Cause I Know That You Didn't",
         "You Must Not Know Fashion"
     };
+    bool ans;
     const int MANUAL_HEIGHT = 32;
     const int MANUAL_WIDTH = 79;
 
@@ -126,7 +128,8 @@ public class jadenSmithTalkScript : MonoBehaviour {
     int moduleId;
     private bool moduleSolved;
 
-    void Awake () {
+    void Awake()
+    {
         moduleId = moduleIdCounter++;
 
         Check.OnInteract += delegate () { ButtonPress(true); return false; };
@@ -137,6 +140,7 @@ public class jadenSmithTalkScript : MonoBehaviour {
     void Start()
     {
         var rs = RuleSeed.GetRNG();
+        string[] og = (string[])quotes.Clone();
         rs.ShuffleFisherYates(quotes);
 
         List<string> quoteList = new List<string> { };
@@ -155,6 +159,12 @@ public class jadenSmithTalkScript : MonoBehaviour {
             lineTotal += lineCount;
         }
         Debug.LogFormat("<Jaden Smith Talk #{0}> Quote list:\n{1}", moduleId, quoteArray.Join("\n"));
+
+        ans = Rnd.Range(0, 2) == 0;
+        string chosenQuote = ans ? quoteArray.PickRandom() : jadenSmithFakes.fakeQuotes[Array.IndexOf(og, quoteArray.PickRandom())].PickRandom();
+        Quote.text = wordWrap(chosenQuote, 35);
+        Debug.LogFormat("[Jaden Smith Talk #{0}] Chosen Quote: {1}", moduleId, chosenQuote);
+        Debug.LogFormat("[Jaden Smith Talk #{0}] The above quote {1} tweeted by Jaden Smith.", moduleId, ans ? "was" : "was not");
     }
 
     string wordWrap(string text, int limit)
@@ -172,7 +182,40 @@ public class jadenSmithTalkScript : MonoBehaviour {
         return text;
     }
 
-    void ButtonPress(bool b) {
-        Debug.Log(b);
+    void ButtonPress(bool b)
+    {
+        if (b) { Check.AddInteractionPunch(1f); } else { Cross.AddInteractionPunch(1f); }
+        if (moduleSolved) { return; }
+        if (ans == b)
+        {
+            Audio.PlaySoundAtTransform("JST_solve", b ? Check.transform : Cross.transform);
+            Module.HandlePass();
+            moduleSolved = true;
+            Debug.LogFormat("[Jaden Smith Talk #{0}] Pressed {1}. That is correct. Module solved.", moduleId, b ? "✓" : "✗");
+            StartCoroutine(SolveAnim());
+        }
+        else
+        {
+            Module.HandleStrike();
+            Debug.LogFormat("[Jaden Smith Talk #{0}] Pressed {1}. That is incorrect, strike!", moduleId, b ? "✓" : "✗");
+        }
+    }
+
+    private IEnumerator SolveAnim()
+    {
+        float elapsed = 0f;
+        float duration = 0.25f;
+        while (elapsed < duration)
+        {
+            Quote.transform.localScale = new Vector3(Lerp(0.00065f, 0f, elapsed * 4), Lerp(0.00065f, 0.00123f, elapsed * 4), 1f);
+            yield return null;
+            elapsed += Time.deltaTime;
+        }
+        Quote.text = null;
+    }
+    
+    float Lerp(float a, float b, float t)
+    { //this assumes t is in the range 0-1
+        return a * (1f - t) + b * t;
     }
 }
